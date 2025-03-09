@@ -2,6 +2,7 @@ import { Request } from "express";
 import { Document, Types } from "mongoose";
 
 export interface IUser extends Document {
+  _id: string;
   userName: string;
   fullName: string;
   email: string;
@@ -11,6 +12,8 @@ export interface IUser extends Document {
   location?: string;
   website?: string;
   role: "user" | "admin";
+  verifyCode: string | null;
+  codeExpiry: Date | null;
   isVerified: boolean;
   isBanned?: boolean;
   refreshToken?: string;
@@ -21,6 +24,8 @@ export interface IUser extends Document {
   comparePassword(enteredPassword: string): Promise<boolean>;
   generateAccessToken(): Promise<string>;
   generateRefreshToken(): Promise<string>;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 export interface IAuthenticatedRequest extends Request {

@@ -2,7 +2,7 @@ import { connectDB } from "./db/index.js";
 import { app } from "./app.js";
 import { config } from "./config/config.js";
 
-// CONNECT TO DATABASE
+// Connect to database
 connectDB()
   .then(() => {
     app.listen(config.port, () => {

@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { config } from "../config/config.js";
 
-// USER SCHEMA
+// User schema
 const userSchema: Schema<IUser> = new Schema({
   userName: {
     type: String,
@@ -28,27 +28,35 @@ const userSchema: Schema<IUser> = new Schema({
   password: {
     type: String,
     required: true,
-    minlength: 6,
+    minlength: 8,
   },
   avatar: {
     type: String, // URL for profile picture
   },
   bio: {
     type: String,
-    maxlength: 160,
+    maxlength: 400,
   },
   location: {
     type: String,
-    maxlength: 100,
+    maxlength: 200,
   },
   website: {
     type: String,
-    maxlength: 100,
+    maxlength: 200,
   },
   role: {
     type: String,
     enum: ["user", "admin"],
     default: "user",
+  },
+  verifyCode: {
+    type: String,
+    default: null,
+  },
+  codeExpiry: {
+    type: Date,
+    default: null,
   },
   isVerified: {
     type: Boolean,
@@ -83,22 +91,22 @@ const userSchema: Schema<IUser> = new Schema({
     type: Date,
     default: null, // Soft delete field for user records
   }
-});
+}, { timestamps: true });
 
-// HASH PASSWORD BEFORE SAVING
+// Hash password before saving
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-// METHOD TO COMPARE PASSWORD
+// Method to compare password
 userSchema.methods.comparePassword = async function (enteredPassword: string) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
 
-// GENERATE ACCESS TOKEN
+// Generate access token
 userSchema.methods.generateAccessToken = async function () {
   const token = jwt.sign(
     {
@@ -116,7 +124,7 @@ userSchema.methods.generateAccessToken = async function () {
   return token;
 };
 
-// GENERATE REFRESH TOKEN
+// Generate refresh token
 userSchema.methods.generateRefreshToken = async function () {
   const token = jwt.sign(
     {
@@ -130,4 +138,4 @@ userSchema.methods.generateRefreshToken = async function () {
   return token;
 };
 
-export const User = mongoose.model<IUser>("User", userSchema);
+export const UserModel = mongoose.model<IUser>("User", userSchema);
