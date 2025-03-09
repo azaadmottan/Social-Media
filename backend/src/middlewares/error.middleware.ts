@@ -7,7 +7,7 @@ const errorMiddleware = (
   res: Response, 
   next: NextFunction
 ) => {
-  console.error("Error:", err.message);
+  console.error(`\n❌ Error: ${err.message}`);
 
   res.status(err.statusCode || 500).json(
     err instanceof ApiError
