@@ -1,11 +1,11 @@
 import  * as dotenv from "dotenv";
 
-// LOAD ENVIRONMENT VARIABLES
+// Load environment variables
 dotenv.config({
   path: ".env",
 });
 
-// GLOBAL VARIABLES
+// Global variables
 const _config = {
   port: process.env.PORT || 8000,
   dbName: process.env.DB_NAME,
@@ -15,6 +15,8 @@ const _config = {
   jwtAccessTokenSecretExpiresIn: process.env.ACCESS_TOKEN_SECRET_EXPIRY as string,
   jwtRefreshTokenSecret: process.env.REFRESH_TOKEN_SECRET,
   jwtRefreshTokenSecretExpiresIn: process.env.REFRESH_TOKEN_SECRET_EXPIRY,
+  otpEmailAddress: process.env.OTP_EMAIL_ADDRESS as string,
+  otpEmailPassword: process.env.OTP_EMAIL_PASSWORD as string,
 }
 
 export const config = Object.freeze(_config);
