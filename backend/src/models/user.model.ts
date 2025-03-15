@@ -32,35 +32,51 @@ const userSchema: Schema<IUser> = new Schema({
   },
   avatar: {
     type: String, // URL for profile picture
+    default: null,
   },
   bio: {
     type: String,
     maxlength: 400,
+    default: null,
   },
   location: {
     type: String,
     maxlength: 200,
+    default: null,
   },
   website: {
     type: String,
     maxlength: 200,
+    default: null,
   },
   role: {
     type: String,
     enum: ["user", "admin"],
     default: "user",
   },
+  accountActivationCode: {
+    type: String,
+    default: null,
+  },
+  activationCodeExpiry: {
+    type: Date,
+    default: null,
+  },
   verifyCode: {
     type: String,
     default: null,
   },
-  codeExpiry: {
+  verifyCodeExpiry: {
     type: Date,
     default: null,
   },
   isVerified: {
     type: Boolean,
     default: false, // Email verification status
+  },
+  isActive: {
+    type: Boolean,
+    default: true, // User account status
   },
   isBanned: {
     type: Boolean,
@@ -87,9 +103,17 @@ const userSchema: Schema<IUser> = new Schema({
       ref: "Post"
     }
   ],
+  isAccountDeleted: {
+    type: Boolean,
+    default: false,
+  },
   deletedAt: {
     type: Date,
     default: null, // Soft delete field for user records
+  },
+  lastActivity: {
+    type: Date,
+    default: Date.now,
   }
 }, { timestamps: true });
 

@@ -12,20 +12,25 @@ export interface IUser extends Document {
   location?: string;
   website?: string;
   role: "user" | "admin";
+  accountActivationCode: string | null;
+  activationCodeExpiry: Date | null;
   verifyCode: string | null;
-  codeExpiry: Date | null;
+  verifyCodeExpiry: Date | null;
   isVerified: boolean;
-  isBanned?: boolean;
-  refreshToken?: string;
-  followers: Types.ObjectId[],
-  following: Types.ObjectId[],
+  isActive: boolean;
+  isBanned: boolean;
+  refreshToken: string;
+  followers: Types.ObjectId[];
+  following: Types.ObjectId[];
   posts: Types.ObjectId[],
-  deletedAt?: Date | null,
   comparePassword(enteredPassword: string): Promise<boolean>;
   generateAccessToken(): Promise<string>;
   generateRefreshToken(): Promise<string>;
   createdAt: Date | null;
   updatedAt: Date | null;
+  isAccountDeleted: boolean;
+  deletedAt?: Date | null;
+  lastActivity?: Date | null;
 }
 
 export interface IAuthenticatedRequest extends Request {
