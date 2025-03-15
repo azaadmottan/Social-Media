@@ -4,7 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { IAuthenticatedRequest } from "../interfaces/user.interface.js";
 import { config } from "../config/config.js";
-import { User } from "../models/user.model.js";
+import { UserModel } from "../models/user.model.js";
 
 const authenticateUser = asyncHandler(async (req: IAuthenticatedRequest, _, next: NextFunction) => {
   try {
@@ -23,7 +23,15 @@ const authenticateUser = asyncHandler(async (req: IAuthenticatedRequest, _, next
       throw new ApiError(401, "Invalid Access Token.");
     }
   
-    const user = await User.findById(decodedToken._id).select("-password -refreshToken");
+    const user = await UserModel.findByIdAndUpdate(
+      decodedToken._id,
+      {
+        lastActivity: new Date(),
+      },
+      {
+        new: true,
+      }
+    ).select("-password -refreshToken");
   
     if (!user) {
       throw new ApiError(401, "User does not exist.");
@@ -35,7 +43,9 @@ const authenticateUser = asyncHandler(async (req: IAuthenticatedRequest, _, next
     // Proceed to next middleware/controller
     next();
   } catch (error: any) {
-    throw new ApiError(401, error?.message || "Invalid or expired access token");
+    throw new ApiError(
+      401, 
+      (error?.message == "jwt expired") ? ("Auth token expired !") : (error?.message)  || "Invalid or expired access token");
   }
 });
 
