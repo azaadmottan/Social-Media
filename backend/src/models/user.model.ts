@@ -14,9 +14,11 @@ const userSchema: Schema<IUser> = new Schema({
     lowercase: true,
     minlength: 3,
   },
-  fullName: {
+  firstName: {
     type: String,
-    maxlength: 250,
+  },
+  lastName: {
+    type: String,
   },
   email: {
     type: String,
@@ -34,19 +36,23 @@ const userSchema: Schema<IUser> = new Schema({
     type: String, // URL for profile picture
     default: null,
   },
+  avatarPublicId: {
+    type: String,
+    default: null,
+  },
   bio: {
     type: String,
-    maxlength: 400,
+    maxlength: 500,
     default: null,
   },
   location: {
     type: String,
-    maxlength: 200,
+    maxlength: 400,
     default: null,
   },
   website: {
     type: String,
-    maxlength: 200,
+    maxlength: 400,
     default: null,
   },
   role: {
@@ -81,6 +87,10 @@ const userSchema: Schema<IUser> = new Schema({
   isBanned: {
     type: Boolean,
     default: false,
+  },
+  isProfileCompleted: {
+    type: Boolean,
+    default: false, // Check if user has completed their profile
   },
   refreshToken: {
     type: String, // Store refresh token for authentication
