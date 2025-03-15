@@ -4,9 +4,12 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/apiError.js";
 import { config } from "../config/config.js";
-import { IAuthenticatedRequest, IUser } from "../interfaces/user.interface.js";
+import { IAuthenticatedRequest } from "../interfaces/user.interface.js";
 import { UserModel } from "../models/user.model.js";
-import { sendAccountActivationCode, sendEmailVerificationCode } from "../emails/sendOtpEmail.js";
+import { 
+  sendAccountActivationCode, 
+  sendEmailVerificationCode 
+} from "../emails/sendOtpEmail.js";
 import { 
   emailValidationSchema,
   getAllUsersSchema,
@@ -19,8 +22,14 @@ import {
   userRoleSchema, 
   userSchema,
   accountActivationCodeSchema,
-  passwordValidationSchema, 
+  passwordValidationSchema,
+  createProfileSchema,
+  updateUserProfilePictureSchema, 
 } from "../schemas/user.schema.js";
+import { 
+  deleteOnCloudinary, 
+  uploadOnCloudinary 
+} from "../utils/cloudinary.js";
 
 // Generate Access & Refresh Token
 const generateAccessAndRefreshToken = async (userId: string) => {
@@ -142,6 +151,7 @@ const registerUser = asyncHandler(async (req: IAuthenticatedRequest, res: Respon
           userName: isUserExisted.userName,
           email: isUserExisted.email,
           isVerified: isUserExisted.isVerified,
+          isProfileCompleted: isUserExisted.isProfileCompleted,
           createdAt: isUserExisted.createdAt,
           updatedAt: isUserExisted.updatedAt,
         },
@@ -158,7 +168,7 @@ const registerUser = asyncHandler(async (req: IAuthenticatedRequest, res: Respon
 const verifyUserAccount = asyncHandler(async (req: IAuthenticatedRequest, res: Response) => {
   const validatedData = verifyOtpSchema.parse(req.body);
 
-  const user = await UserModel.findById(req.user._id);
+  const user = await UserModel.findById(req.user?._id);
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -211,6 +221,7 @@ const verifyUserAccount = asyncHandler(async (req: IAuthenticatedRequest, res: R
           userName: saveVerifiedUser.userName,
           email: saveVerifiedUser.email,
           isVerified: saveVerifiedUser.isVerified,
+          isProfileCompleted: saveVerifiedUser.isProfileCompleted,
           createdAt: saveVerifiedUser.createdAt,
           updatedAt: saveVerifiedUser.updatedAt,
         },
@@ -221,7 +232,7 @@ const verifyUserAccount = asyncHandler(async (req: IAuthenticatedRequest, res: R
 
 // Resend OTP
 const resendOTP = asyncHandler(async (req: IAuthenticatedRequest, res: Response) => {
-  const user = await UserModel.findById(req.user._id);
+  const user = await UserModel.findById(req.user?._id);
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -265,6 +276,80 @@ const resendOTP = asyncHandler(async (req: IAuthenticatedRequest, res: Response)
           userName: saveUser.userName,
           email: saveUser.email,
           isVerified: saveUser.isVerified,
+        },
+      }
+    )
+  );
+});
+
+// Create profile
+const createProfile = asyncHandler(async (req: IAuthenticatedRequest, res: Response) => {
+  const validatedData = createProfileSchema.parse(req.body);
+
+  const user = await UserModel.findById(req.user?._id);
+
+  if (!user?.isVerified) {
+    throw new ApiError(400, "User account is not verified");
+  }
+
+  if (user?.isProfileCompleted) {
+    throw new ApiError(400, "User profile already exists");
+  }
+
+  let avatarUrl = "";
+  let avatarPublicId = "";
+
+  if (req.file) {
+    const uploadAvatar = await uploadOnCloudinary(req.file?.path);
+
+    if (!uploadAvatar) {
+      throw new ApiError(500, "Failed to upload profile picture");
+    }
+    avatarUrl = uploadAvatar.url;
+    avatarPublicId = uploadAvatar.public_id;
+  }
+
+  const createProfile = await UserModel.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: avatarUrl,
+        avatarPublicId,
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
+        bio: validatedData.bio,
+        location: validatedData.location,
+        website: validatedData.website,
+        isProfileCompleted: true,
+      },
+    },
+    { new: true }
+  );
+
+  if (!createProfile) {
+    throw new ApiError(500, "Failed to create profile");
+  }
+
+  return res.status(200)
+  .json(
+    new ApiResponse(
+      200,
+      "Profile created successfully",
+      {
+        user: {
+          _id: createProfile._id,
+          userName: createProfile.userName,
+          email: createProfile.email,
+          firstName: createProfile.firstName,
+          lastName: createProfile.lastName,
+          avatar: createProfile.avatar,
+          bio: createProfile.bio,
+          location: createProfile.location,
+          website: createProfile.website,
+          isVerified: createProfile.isVerified,
+          isProfileCompleted: createProfile.isProfileCompleted,
+          createdAt: createProfile.createdAt,
+          updatedAt: createProfile.updatedAt,
         },
       }
     )
@@ -337,6 +422,7 @@ const loginUser = asyncHandler(async (req: IAuthenticatedRequest, res: Response)
           userName: saveUser.userName,
           email: saveUser.email,
           isVerified: saveUser.isVerified,
+          isProfileCompleted: saveUser.isProfileCompleted,
           createdAt: saveUser.createdAt,
           updatedAt: saveUser.updatedAt,
         },
@@ -352,7 +438,7 @@ const loginUser = asyncHandler(async (req: IAuthenticatedRequest, res: Response)
 // Logout user
 const logoutUser = asyncHandler(async (req: IAuthenticatedRequest, res: Response) => {
   const user = await UserModel.findByIdAndUpdate(
-    req.user._id,
+    req.user?._id,
     {
       $unset: {
         refreshToken: 1,
@@ -422,7 +508,9 @@ const updatePassword = asyncHandler(async (req: IAuthenticatedRequest, res: Resp
 const updateToken = asyncHandler(async (req: IAuthenticatedRequest, res: Response) => {
   const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
 
-  const validatedData = refreshTokenSchema.parse(incomingRefreshToken); 
+  const validatedData = refreshTokenSchema.parse({
+    refreshToken: incomingRefreshToken
+  }); 
 
   try {
     const decodedToken = await jwt.verify(
@@ -510,7 +598,7 @@ const updateUserRole = asyncHandler(async (req: IAuthenticatedRequest, res: Resp
 
 // Get current user
 const getCurrentUser = asyncHandler(async (req: IAuthenticatedRequest, res: Response) => {
-  const user = await UserModel.findById(req.user._id)
+  const user = await UserModel.findById(req.user?._id)
   .select("-password -refreshToken");
 
   if (!user) {
@@ -524,6 +612,121 @@ const getCurrentUser = asyncHandler(async (req: IAuthenticatedRequest, res: Resp
       "User retrieved successfully",
       {
         user,
+      }
+    )
+  );
+});
+
+// Update profile picture
+const updateProfilePicture = asyncHandler(async (req: IAuthenticatedRequest, res: Response) => {
+  const validatedData = updateUserProfilePictureSchema.parse({
+    avatar: req.file,
+  });
+
+  const user = await UserModel.findById(req.user?._id);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user?.avatar && user?.avatarPublicId) {
+    const deleteAvatar = await deleteOnCloudinary(user?.avatarPublicId);
+
+    if (!deleteAvatar || deleteAvatar.result?.deleted === 0) {
+      throw new ApiError(500, "Failed to update profile picture");
+    }
+  }
+
+  let updatedAvatarUrl = "";
+  let updatedAvatarPublicId = "";
+  if (req.file?.path) {
+    const uploadAvatar = await uploadOnCloudinary(req.file?.path);
+
+    if (!uploadAvatar || uploadAvatar?.public_id === "") {
+      throw new ApiError(500, "Failed to upload profile picture");
+    }
+
+    updatedAvatarUrl = uploadAvatar.url;
+    updatedAvatarPublicId = uploadAvatar.public_id;
+  }
+
+  user.avatar = updatedAvatarUrl;
+  user.avatarPublicId = updatedAvatarPublicId;
+
+  const saveUser = await user.save({
+    validateBeforeSave: false,
+  });
+
+  if (!saveUser) {
+    throw new ApiError(500, "Failed to update profile picture");
+  }
+
+  return res.status(200)
+  .json(
+    new ApiResponse(
+      200,
+      "Profile picture updated successfully",
+      {
+        user: {
+          _id: user._id,
+          userName: user.userName,
+          email: user.email,
+          avatar: user.avatar,
+          isVerified: user.isVerified,
+          isProfileCompleted: user.isProfileCompleted,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        },
+      }
+    )
+  );
+});
+
+// Delete profile picture
+const deleteProfilePicture = asyncHandler(async (req: IAuthenticatedRequest, res: Response) => {
+  const user = await UserModel.findById(req.user?._id);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (!user?.avatar || !user?.avatarPublicId) {
+    throw new ApiError(400, "User have no profile picture");
+  }
+
+  const deleteAvatar = await deleteOnCloudinary(user?.avatarPublicId);
+
+  if (!deleteAvatar || deleteAvatar.result?.deleted === 0) {
+    throw new ApiError(500, "Failed to delete profile picture");
+  }
+
+  user.avatar = null;
+  user.avatarPublicId = null;
+
+  const saveUser = await user.save({
+    validateBeforeSave: false,
+  });
+
+  if (!saveUser) {
+    throw new ApiError(500, "Failed to delete profile picture");
+  }
+
+  return res.status(200)
+  .json(
+    new ApiResponse(
+      200,
+      "Profile picture deleted successfully",
+      {
+        user: {
+          _id: user._id,
+          userName: user.userName,
+          email: user.email,
+          avatar: user.avatar,
+          isVerified: user.isVerified,
+          isProfileCompleted: user.isProfileCompleted,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        },
       }
     )
   );
@@ -781,10 +984,13 @@ export {
   registerUser,
   verifyUserAccount,
   resendOTP,
+  createProfile,
   loginUser,
   logoutUser,
   updatePassword,
   updateToken,
+  updateProfilePicture,
+  deleteProfilePicture,
   updateUserRole,
   getCurrentUser,
   updateUserAccountDetails,
