@@ -4,10 +4,13 @@ import { Document, Types } from "mongoose";
 export interface IUser extends Document {
   _id: string;
   userName: string;
+  firstName: string;
+  lastName: string;
   fullName: string;
   email: string;
   password: string;
-  avatar?: string;
+  avatar: string | null;
+  avatarPublicId: string | null;
   bio?: string;
   location?: string;
   website?: string;
@@ -19,6 +22,7 @@ export interface IUser extends Document {
   isVerified: boolean;
   isActive: boolean;
   isBanned: boolean;
+  isProfileCompleted: boolean;
   refreshToken: string;
   followers: Types.ObjectId[];
   following: Types.ObjectId[];
