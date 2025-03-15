@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import morgan from "morgan";
 import errorMiddleware from "./middlewares/error.middleware.js";
 
 const app = express();
@@ -28,6 +29,10 @@ app.use(
 
 app.use(
   cookieParser()
+);
+
+app.use(
+  morgan("dev")
 );
 
 // Api start url
