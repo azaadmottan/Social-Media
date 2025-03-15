@@ -17,6 +17,9 @@ const _config = {
   jwtRefreshTokenSecretExpiresIn: process.env.REFRESH_TOKEN_SECRET_EXPIRY,
   otpEmailAddress: process.env.OTP_EMAIL_ADDRESS as string,
   otpEmailPassword: process.env.OTP_EMAIL_PASSWORD as string,
+  cloudName: process.env.CLOUDINARY_CLOUD_NAME as string,
+  apiKey: process.env.CLOUDINARY_API_KEY as string,
+  apiSecret: process.env.CLOUDINARY_API_SECRET as string,
 }
 
 export const config = Object.freeze(_config);
