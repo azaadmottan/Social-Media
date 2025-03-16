@@ -30,8 +30,8 @@ export interface IUser extends Document {
   comparePassword(enteredPassword: string): Promise<boolean>;
   generateAccessToken(): Promise<string>;
   generateRefreshToken(): Promise<string>;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
   isAccountDeleted: boolean;
   deletedAt?: Date | null;
   lastActivity?: Date | null;
