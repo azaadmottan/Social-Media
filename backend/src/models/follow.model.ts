@@ -15,7 +15,7 @@ const followSchema: Schema<IFollow> = new Schema({
   },
   status: {
     type: String,
-    enum: ["Pending", "Accepted"],
+    enum: ["Pending", "Accepted", "Blocked"],
     default: "Pending"
   },
 }, { timestamps: true });
