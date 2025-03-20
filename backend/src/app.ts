@@ -47,10 +47,12 @@ const apiBaseUrl = `/${api}/${apiVersion}`;
 // Api routes
 
 import userRouter from "./routes/user.routes.js";
+import followRouter from "./routes/follow.routes.js";
 
 // Api end-point routes
 
 app.use(`${apiBaseUrl}/user`, userRouter);
+app.use(`${apiBaseUrl}/follow`, followRouter);
 
 
 // Middleware for error handling
