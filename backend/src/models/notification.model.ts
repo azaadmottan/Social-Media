@@ -33,6 +33,10 @@ const notificationSchema: Schema<INotification> = new Schema({
     ref: "Like",
     default: null
   },
+  message: {
+    type: String,
+    required: true
+  },
   isRead: {
     type: Boolean,
     default: false
