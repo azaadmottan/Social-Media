@@ -40,6 +40,10 @@ const userSchema: Schema<IUser> = new Schema({
     type: String,
     default: null,
   },
+  isPrivateAccount: {
+    type: Boolean,
+    default: false, // Default to false for public profiles
+  },
   bio: {
     type: String,
     maxlength: 500,
@@ -95,24 +99,6 @@ const userSchema: Schema<IUser> = new Schema({
   refreshToken: {
     type: String, // Store refresh token for authentication
   },
-  followers: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "User"
-    }
-  ],
-  following: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "User"
-    }
-  ],
-  posts: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Post"
-    }
-  ],
   isAccountDeleted: {
     type: Boolean,
     default: false,
