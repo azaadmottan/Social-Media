@@ -7,6 +7,7 @@ export interface INotification extends Document {
   post?: Types.ObjectId | null;
   comment?: Types.ObjectId | null;
   like?: Types.ObjectId | null;
+  message: string;
   isRead: boolean;
   createdAt: Date;
   updatedAt: Date;

@@ -11,6 +11,7 @@ export interface IUser extends Document {
   password: string;
   avatar: string | null;
   avatarPublicId: string | null;
+  isPrivateAccount: boolean;
   bio?: string;
   location?: string;
   website?: string;
@@ -24,9 +25,6 @@ export interface IUser extends Document {
   isBanned: boolean;
   isProfileCompleted: boolean;
   refreshToken: string;
-  followers: Types.ObjectId[];
-  following: Types.ObjectId[];
-  posts: Types.ObjectId[],
   comparePassword(enteredPassword: string): Promise<boolean>;
   generateAccessToken(): Promise<string>;
   generateRefreshToken(): Promise<string>;
