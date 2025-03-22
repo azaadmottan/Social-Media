@@ -15,7 +15,7 @@ import {
   sendFollowRequest,
   unblockUser,
   unfollowUser,
-} from "../controllers/follow.controller.js";
+} from "../controllers/relation.controller.js";
 
 const router = Router();
 
