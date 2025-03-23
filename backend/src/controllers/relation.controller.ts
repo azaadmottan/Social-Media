@@ -3,7 +3,7 @@ import { IAuthenticatedRequest } from "../interfaces/user.interface.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { isValidObjectId, Types } from "mongoose";
 import { ApiError } from "../utils/apiError.js";
-import { FollowModel } from "../models/follow.model.js";
+import { RelationModel } from "../models/relation.model.js";
 import { UserModel } from "../models/user.model.js";
 import { NotificationModel } from "../models/notification.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
@@ -28,7 +28,7 @@ const sendFollowRequest = asyncHandler(async (req: IAuthenticatedRequest, res: R
   }
 
   // Check if the current user is already following the requested user
-  const isExistFollowing = await FollowModel.findOne({
+  const isExistFollowing = await RelationModel.findOne({
     follower: currentUserId,
     following: id,
   });
@@ -44,7 +44,7 @@ const sendFollowRequest = asyncHandler(async (req: IAuthenticatedRequest, res: R
   // Send follow-request to private account
   if (requestedUser.isPrivateAccount) {
     // Send request to private account
-    const followRequest = await FollowModel.create({
+    const followRequest = await RelationModel.create({
       follower: currentUserId,
       following: id,
       status: "Pending",
@@ -76,7 +76,7 @@ const sendFollowRequest = asyncHandler(async (req: IAuthenticatedRequest, res: R
   }
 
   // Send & accept follow-request to public account
-  const followRequest = await FollowModel.create({
+  const followRequest = await RelationModel.create({
     follower: currentUserId,
     following: id,
     status: "Accepted",
@@ -123,7 +123,7 @@ const acceptFollowRequest = asyncHandler(async (req: IAuthenticatedRequest, res:
   }
 
   // Check if the follow request exists
-  const followRequest = await FollowModel.findOne({
+  const followRequest = await RelationModel.findOne({
     follower: id,
     following: currentUserId,
     status: "Pending",
@@ -178,7 +178,7 @@ const cancelFollowRequest = asyncHandler(async (req: IAuthenticatedRequest, res:
   }
 
   // Find the follow request
-  const followRequest = await FollowModel.findOne({
+  const followRequest = await RelationModel.findOne({
     follower: currentUserId,
     following: id,
     status: "Pending",
@@ -190,7 +190,7 @@ const cancelFollowRequest = asyncHandler(async (req: IAuthenticatedRequest, res:
 
 
   // Remove the follow request
-  const deleteRequest = await FollowModel.findByIdAndDelete(followRequest?._id);
+  const deleteRequest = await RelationModel.findByIdAndDelete(followRequest?._id);
 
   if (!deleteRequest) {
     throw new ApiError(500, "Failed to cancel follow request");
@@ -224,7 +224,7 @@ const rejectFollowRequest = asyncHandler(async (req: IAuthenticatedRequest, res:
   }
 
   // Check if the follow request exists
-  const followRequest = await FollowModel.findOne({
+  const followRequest = await RelationModel.findOne({
     follower: id,
     following: currentUserId,
     status: "Pending",
@@ -235,7 +235,7 @@ const rejectFollowRequest = asyncHandler(async (req: IAuthenticatedRequest, res:
   }
 
   // Delete the follow request (rejecting it)
-  const deletedRequest = await FollowModel.findByIdAndDelete(followRequest._id);
+  const deletedRequest = await RelationModel.findByIdAndDelete(followRequest._id);
 
   if (!deletedRequest) {
     throw new ApiError(500, "Failed to reject follow request");
@@ -278,7 +278,7 @@ const unfollowUser = asyncHandler(async (req: IAuthenticatedRequest, res: Respon
   }
 
   // Check if the user is already following
-  const followRequest = await FollowModel.findOne({
+  const followRequest = await RelationModel.findOne({
     follower: currentUserId,
     following: id,
     status: "Accepted",
@@ -288,7 +288,7 @@ const unfollowUser = asyncHandler(async (req: IAuthenticatedRequest, res: Respon
     throw new ApiError(404, "You are not following this user");
   }
 
-  const unfollow = await FollowModel.findByIdAndDelete(followRequest?._id);
+  const unfollow = await RelationModel.findByIdAndDelete(followRequest?._id);
 
   if (!unfollow) {
     throw new ApiError(500, "Failed to unfollow user");
@@ -421,6 +421,51 @@ const getUserSocialProfile = asyncHandler(async (req: IAuthenticatedRequest, res
   );
 });
 
+// Retrieves the list of user that follow me
+const getMyFollowerList = asyncHandler(async (req: IAuthenticatedRequest, res: Response) => {
+  const currentUserId = req.user?._id;
+
+  const followers = await RelationModel.aggregate([
+    {
+      $match: {
+        following: new Types.ObjectId(currentUserId), // Users following me
+        status: "Accepted"
+      }
+    },
+    {
+      $lookup: {
+        from: "users", // Reference to the "users" collection
+        localField: "follower",
+        foreignField: "_id",
+        as: "followerInfo"
+      }
+    },
+    {
+      $unwind: "$followerInfo" // Convert array into object
+    },
+    {
+      $project: {
+        _id: "$followerInfo._id", // Restructure to be a flat object
+        userName: "$followerInfo.userName",
+        email: "$followerInfo.email",
+        avatar: "$followerInfo.avatar",
+        firstName: "$followerInfo.firstName",
+        lastName: "$followerInfo.lastName",
+        isPrivateAccount: "$followerInfo.isPrivateAccount"
+      }
+    }
+  ]);
+
+  return res.status(200)
+  .json(
+    new ApiResponse(
+      200,
+      "Follower list retrieved successfully",
+      followers
+    )
+  );
+});
+
 // Retrieves the list of followers for a user
 const getUserFollowerList = asyncHandler(async (req: IAuthenticatedRequest, res: Response) => {
   const { id } = req.params;
@@ -436,7 +481,7 @@ const getUserFollowerList = asyncHandler(async (req: IAuthenticatedRequest, res:
     throw new ApiError(404, "User not found");
   }
 
-  const isUserFriend = await FollowModel.findOne({
+  const isUserFriend = await RelationModel.findOne({
     $or: [
       {
         follower: new Types.ObjectId(currentUserId),
@@ -454,7 +499,7 @@ const getUserFollowerList = asyncHandler(async (req: IAuthenticatedRequest, res:
     throw new ApiError(403, "You cannot access private account followers");
   }
 
-  const followers = await FollowModel.aggregate([
+  const followers = await RelationModel.aggregate([
     {
       $match: {
         following: new Types.ObjectId(id),
@@ -470,7 +515,7 @@ const getUserFollowerList = asyncHandler(async (req: IAuthenticatedRequest, res:
         pipeline: [
           {
             $lookup: {
-              from: "follows",
+              from: "relations",
               let: { followerId: "$_id" },
               pipeline: [
                 {
@@ -549,7 +594,7 @@ const getUserFollowingList = asyncHandler(async (req: IAuthenticatedRequest, res
     throw new ApiError(404, "User not found");
   }
 
-  const isUserFriend = await FollowModel.findOne({
+  const isUserFriend = await RelationModel.findOne({
     $or: [
       {
         follower: currentUserId,
@@ -567,7 +612,7 @@ const getUserFollowingList = asyncHandler(async (req: IAuthenticatedRequest, res
     throw new ApiError(403, "You cannot access private account following");
   }
 
-  const followings = await FollowModel.aggregate([
+  const followings = await RelationModel.aggregate([
     {
       $match: {
         follower: new Types.ObjectId(id),
@@ -655,7 +700,7 @@ const getFollowerRequests = asyncHandler(async (req: IAuthenticatedRequest, res:
     throw new ApiError(400, "Invalid user ID");
   }
 
-  const followRequests = await FollowModel.aggregate([
+  const followRequests = await RelationModel.aggregate([
     {
       $match: {
         following: new Types.ObjectId(currentUserId),
@@ -703,7 +748,7 @@ const getFollowerRequests = asyncHandler(async (req: IAuthenticatedRequest, res:
 const getFollowingRequests = asyncHandler(async (req: IAuthenticatedRequest, res: Response) => {
   const currentUserId = req.user?._id;
 
-  const sentFollowRequests = await FollowModel.aggregate([
+  const sentFollowRequests = await RelationModel.aggregate([
     {
       $match: {
         follower: new Types.ObjectId(currentUserId),
@@ -756,7 +801,7 @@ const removeFollower = asyncHandler(async (req: IAuthenticatedRequest, res: Resp
     throw new ApiError(400, "Invalid user ID");
   }
 
-  const follower = await FollowModel.findOneAndDelete(
+  const follower = await RelationModel.findOneAndDelete(
     {
       follower: new Types.ObjectId(id),
       following: new Types.ObjectId(currentUserId),
@@ -787,7 +832,7 @@ const blockUser = asyncHandler(async (req: IAuthenticatedRequest, res: Response)
     throw new ApiError(400, "Invalid user ID");
   }
 
-  const existingFollow = await FollowModel.findOne({
+  const existingFollow = await RelationModel.findOne({
     $or: [
       { 
         follower: new Types.ObjectId(id), 
@@ -808,7 +853,7 @@ const blockUser = asyncHandler(async (req: IAuthenticatedRequest, res: Response)
     blockedUser = await existingFollow.save();
   } else {
     // If no previous connection, create a new "Blocked" entry
-    blockedUser = await FollowModel.create({
+    blockedUser = await RelationModel.create({
       follower: new Types.ObjectId(id),
       following: new Types.ObjectId(currentUserId),
       status: "Blocked"
@@ -834,7 +879,7 @@ const unblockUser = asyncHandler(async (req: IAuthenticatedRequest, res: Respons
     throw new ApiError(400, "Invalid user ID");
   }
 
-  const unblockedUser = await FollowModel.findOneAndDelete(
+  const unblockedUser = await RelationModel.findOneAndDelete(
     {
       $or: [
         { 
@@ -872,7 +917,7 @@ const getBlockedUsers = asyncHandler(async (req: IAuthenticatedRequest, res: Res
     throw new ApiError(400, "Invalid user ID");
   }
 
-  const blockedUsers = await FollowModel.aggregate([
+  const blockedUsers = await RelationModel.aggregate([
     {
       $match: {
         $or: [
@@ -948,6 +993,7 @@ export {
   unfollowUser,
   removeFollower,
   getUserSocialProfile,
+  getMyFollowerList,
   getUserFollowerList,
   getUserFollowingList,
   getFollowerRequests,
