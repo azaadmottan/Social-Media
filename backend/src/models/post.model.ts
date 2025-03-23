@@ -11,26 +11,14 @@ const postSchema: Schema<IPost> = new Schema({
   content: {
     type: String,
   },
-  image: {
-    type: String,
-    required: true
-  },
-  likes: [
+  postImages: [
     {
-      type: Schema.Types.ObjectId,
-      ref: "Like"
+      type: String,
     }
   ],
-  comments: [
+  postImagesPublicIds: [
     {
-      type: Schema.Types.ObjectId,
-      ref: "Comment"
-    }
-  ],
-  shares: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "User"
+      type: String,
     }
   ],
   views: {
