@@ -1,6 +1,6 @@
 import { Document, Types } from "mongoose";
 
-export interface IFollow extends Document {
+export interface IRelation extends Document {
   follower: Types.ObjectId; // User who follows
   following: Types.ObjectId; // User who is being followed
   status: "Pending" | "Accepted" | "Blocked"; // For handling follow requests

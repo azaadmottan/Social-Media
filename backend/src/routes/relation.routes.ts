@@ -7,6 +7,7 @@ import {
   getBlockedUsers,
   getFollowerRequests,
   getFollowingRequests,
+  getMyFollowerList,
   getUserFollowerList,
   getUserFollowingList,
   getUserSocialProfile,
@@ -28,6 +29,7 @@ router.route("/reject-follow-request").delete(authenticateUser, rejectFollowRequ
 router.route("/unfollow-user").delete(authenticateUser, unfollowUser);
 router.route("/remove-follower").delete(authenticateUser, removeFollower);
 router.route("/get-social-profile/:id").get(authenticateUser, getUserSocialProfile);
+router.route("/get-my-follower").get(authenticateUser, getMyFollowerList);
 router.route("/get-user-follower/:id").get(authenticateUser, getUserFollowerList);
 router.route("/get-user-following/:id").get(authenticateUser, getUserFollowingList);
 router.route("/get-follower-requests").get(authenticateUser, getFollowerRequests);

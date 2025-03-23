@@ -1,8 +1,8 @@
 import mongoose, { Schema } from "mongoose";
-import { IFollow } from "../interfaces/follow.interface.js";
+import { IRelation } from "../interfaces/relation.interface.js";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-const followSchema: Schema<IFollow> = new Schema({
+const relationSchema: Schema<IRelation> = new Schema({
   follower: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -20,6 +20,6 @@ const followSchema: Schema<IFollow> = new Schema({
   },
 }, { timestamps: true });
 
-followSchema.plugin(mongooseAggregatePaginate);
+relationSchema.plugin(mongooseAggregatePaginate);
 
-export const FollowModel = mongoose.model<IFollow>("Follow", followSchema);
+export const RelationModel = mongoose.model<IRelation>("Relation", relationSchema);
