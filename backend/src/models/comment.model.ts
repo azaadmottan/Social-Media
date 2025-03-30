@@ -22,18 +22,6 @@ const commentSchema: Schema<IComment> = new Schema({
     type: String,
     required: true,
   },
-  likes: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Like"
-    }
-  ],
-  replies: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Comment"
-    }
-  ]
 }, { timestamps: true });
 
 commentSchema.plugin(mongooseAggregatePaginate);
