@@ -49,12 +49,16 @@ const apiBaseUrl = `/${api}/${apiVersion}`;
 import userRouter from "./routes/user.routes.js";
 import relationRouter from "./routes/relation.routes.js";
 import postRouter from "./routes/post.routes.js";
+import likeRouter from "./routes/like.routes.js";
+import commentRouter from "./routes/comment.routes.js";
 
 // Api end-point routes
 
 app.use(`${apiBaseUrl}/user`, userRouter);
 app.use(`${apiBaseUrl}/relation`, relationRouter);
 app.use(`${apiBaseUrl}/post`, postRouter);
+app.use(`${apiBaseUrl}/like`, likeRouter);
+app.use(`${apiBaseUrl}/comment`, commentRouter);
 
 
 // Middleware for error handling
