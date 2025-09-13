@@ -368,7 +368,7 @@ const loginUser = asyncHandler(async (req: IAuthenticatedRequest, res: Response)
   });
 
   if (!user) {
-    throw new ApiError(404, "User not found");
+    throw new ApiError(404, "Invalid credentials / User not found !");
   }
 
   const isCorrectPassword = await user.comparePassword(validatedData.password);
