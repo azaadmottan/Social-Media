@@ -1,0 +1,15 @@
+export const RoutesMeta: Record<string, string> = {
+  "/": "Home",
+  "/login": "Login",
+  "/register": "Register",
+  "/admin/dashboard": "Admin Dashboard",
+  "/admin/dashboard/users": "User",
+  "/admin/dashboard/comments": "Comment",
+  "/admin/dashboard/posts": "Post",
+  "/admin/dashboard/reports": "Report",
+  "/admin/dashboard/analytics": "Analytics",
+  "/admin/dashboard/notifications": "Notifications",
+  "/admin/dashboard/chat": "Chat",
+  "/admin/dashboard/profile": "Profile",
+  "/admin/dashboard/settings": "Settings",
+}
